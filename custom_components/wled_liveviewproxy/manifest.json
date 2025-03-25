@@ -1,0 +1,15 @@
+{
+  "domain": "wled_liveviewproxy",
+  "name": "WLED Live View Proxy",
+  "codeowners": [
+    "@danishru"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/danishru/wled_liveviewproxy?tab=readme-ov-file",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/danishru/wled_liveviewproxy/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}
