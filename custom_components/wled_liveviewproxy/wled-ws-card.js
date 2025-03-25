@@ -232,7 +232,7 @@ window.customCards.push({
   name: "WLED Live View Card",
   preview: false,
   description: "Card for displaying live view from WLED via WebSocket.",
-  documentationURL: "https://developers.home-assistant.io/docs/frontend/custom-ui/custom-card-feature"
+  documentationURL: "https://github.com/danishru/wled_liveviewproxy/?tab=readme-ov-file"
 });
 
 // ======================================================================
