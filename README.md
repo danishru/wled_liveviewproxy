@@ -42,8 +42,7 @@ https://github.com/user-attachments/assets/ae4ff0ef-f80a-408f-a198-dcd9a109cdf4
 
 - **Control Mode:**\
   Enabling control mode updates sensor data instantly and activates device availability notifications. This uses an additional WebSocket connection to your WLED device. It also adds a light entity named "WLVP - {WLED name}", supporting basic operations (on/off and brightness adjustment) via WebSocket.
-
-![image](https://github.com/user-attachments/assets/2108b262-2b22-47be-8ba8-f2a24d821339)
+  ![image](https://github.com/user-attachments/assets/2108b262-2b22-47be-8ba8-f2a24d821339)
 
 ## Installation
 
