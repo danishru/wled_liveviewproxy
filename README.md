@@ -30,13 +30,13 @@ https://github.com/user-attachments/assets/ae4ff0ef-f80a-408f-a198-dcd9a109cdf4
 - **Unlimited View Sessions:**\
   You're no longer limited to a single WebSocket session for viewing WLED LiveView. You can create as many sessions as your Home Assistant resources allow. The number of active connections is displayed in a dedicated sensor named "WLVP - {WLED name}". This sensor also shows the number of native WebSocket connections of the WLED device itself.
 
-  ![image](https://github.com/user-attachments/assets/38abe0f3-ff12-4dce-9930-2b6aa5eca9e6)
-
 - **Automatic Configuration:**\
   The integration doesn't require complex setup. When adding a device, you only need to provide the IP address. Everything else is configured automatically.
 
 - **User-Friendly Card for Home Assistant:**\
   The card has a user-friendly interface clearly showing the current WLED effect in real-time, similar to the "peek" feature in the WLED web interface.
+
+  ![image](https://github.com/user-attachments/assets/38abe0f3-ff12-4dce-9930-2b6aa5eca9e6)
 
 - **Secure and Simple Connection:**\
   You don't need to set up nginx proxies, router port forwarding, or publish the WLED web interface online. Everything operates securely within your local network.
