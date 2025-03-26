@@ -13,7 +13,7 @@ class WledWsCard extends HTMLElement {
     this.initialized = false;
   }
 
-  // Геттер для доступа к hass
+  // Геттер для доступа к Home Assistant
   get hass() {
     return this._hass;
   }
@@ -84,6 +84,10 @@ class WledWsCard extends HTMLElement {
         console.warn("wled-ws-card: Neither sensor nor entry_id specified, using 'default'");
       }
       this.config.entry_id = "default";
+    }
+    // Если яркость не задана, используем 100%
+    if (!this.config.brightness) {
+      this.config.brightness = 100;
     }
     this.initialized = true;
   }
@@ -181,27 +185,34 @@ class WledWsCard extends HTMLElement {
   }
 
   render() {
-    // Если параметр brightness не задан, используем 100%
-    const brightness = this.config.brightness || 100;
+    const brightness = this.config.brightness;
     this.shadowRoot.innerHTML = `
-      <style>
-        .card {
-          min-height: 10px;
-          height: 100%;
-          width: 100%;
-          filter: brightness(${brightness}%);
-        }
-      </style>
-      <div class="card" id="card"></div>
+        <style>
+          :host {
+            --card-brightness: ${brightness}%;
+          }
+          ha-card {
+            width: 100%;
+            height: 100%;
+            border-radius: var(--ha-card-border-radius, 8px);
+            overflow: hidden;
+          }
+          .card-content {
+            width: 100%;
+            height: 100%;
+            filter: brightness(var(--card-brightness, 100%));
+          }
+        </style>
+        <ha-card>
+          <div class="card-content" id="card"></div>
+        </ha-card>
     `;
   }
 
-  // Размер карточки для режима masonry (1 = 50px)
   getCardSize() {
     return 1;
   }
 
-  // Параметры сетки для режима sections view (1 ряд, 12 колонок)
   getGridOptions() {
     return {
       rows: 1,
@@ -209,17 +220,16 @@ class WledWsCard extends HTMLElement {
     };
   }
 
-  // Возвращает элемент редактора для настройки карточки
   static getConfigElement() {
     return document.createElement("wled-ws-card-editor");
   }
 
-  // Stub-конфигурация для предварительного заполнения
   static getStubConfig() {
     return {
       sensor: "",
       debug: false,
-      info: false
+      info: false,
+      brightness: 100
     };
   }
 }
@@ -236,7 +246,7 @@ window.customCards.push({
 });
 
 // ======================================================================
-// Редактор конфигурации с использованием ha-selector (LitElement вариант)
+// Редактор конфигурации (LitElement вариант)
 // ======================================================================
 
 class WledWsCardEditor extends LitElement {
@@ -314,7 +324,6 @@ class WledWsCardEditor extends LitElement {
     if (!this.hass) {
       return html`<div>Waiting for Home Assistant state...</div>`;
     }
-    // Вычисляем список сенсоров, начинающихся с "sensor.wlvp_"
     const sensors = Object.keys(this.hass.states).filter(
       entityId =>
         entityId.startsWith("sensor.wlvp_") &&
@@ -330,7 +339,7 @@ class WledWsCardEditor extends LitElement {
     
     return html`
       <div class="editor">
-        <!-- Селектор сущности -->
+        <!-- Селектор сущности без label -->
         <div class="selector-wrapper">
           <ha-formfield>
             <ha-selector
@@ -349,7 +358,7 @@ class WledWsCardEditor extends LitElement {
             .value="${this._config.brightness ? String(this._config.brightness) : '100'}"
             type="number"
             min="0"
-            max="100"
+            max="1000"
             step="1"
             @input="${this._brightnessChanged}">
           </ha-textfield>

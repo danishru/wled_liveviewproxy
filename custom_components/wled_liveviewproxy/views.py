@@ -24,6 +24,20 @@ def process_binary(data: bytes) -> str:
     gradient += ",".join(colors) + ")"
     return gradient
 
+async def delayed_update(wled_ip: str, entry_data: dict, delay: int = 10):
+    await asyncio.sleep(delay)
+    await update_device_state(wled_ip, entry_data)
+
+def schedule_update_state(wled_ip: str, entry_data: dict, delay: int = 10):
+    """
+    Планирует обновление состояния устройства через заданную задержку.
+    Если уже запланирована задача – отменяет её и создаёт новую.
+    """
+    existing_task = entry_data.get("update_timer")
+    if existing_task is not None and not existing_task.done():
+        existing_task.cancel()
+    entry_data["update_timer"] = asyncio.create_task(delayed_update(wled_ip, entry_data, delay))
+
 async def connect_wled_for_entry(wled_ip: str, entry_data: dict):
     """
     Устанавливает соединение с WLED по заданному IP и ретранслирует данные всем активным клиентам для данной записи.
@@ -74,7 +88,8 @@ async def connect_wled_for_entry(wled_ip: str, entry_data: dict):
                     data = ""
 
                 if data:
-                    _LOGGER.debug("Received from WLED (CSS gradient): %s", data)
+                    # Включать только для глубокой отладки. Создает много данных
+                    # _LOGGER.debug("Received from WLED (CSS gradient): %s", data)
                     # Рассылаем данные всем активным клиентам для данной записи
                     for client in list(connections["client_ws_list"]):
                         try:
@@ -124,12 +139,16 @@ class WledWSView(HomeAssistantView):
         _LOGGER.debug(f"New WS client for {entry_id} connected. Total clients: {len(connections['client_ws_list'])}")
 
         wled_ip = config_data.get("wled_ip")
-        # При подключении нового клиента обновляем состояние устройства
         if wled_ip:
-            asyncio.create_task(update_device_state(wled_ip, entry_data))
+            # При подключении нового клиента обновляем состояние устройства:
+            # Если это первый клиент – обновляем сразу, иначе планируем обновление через 10 секунд.
+            if len(connections["client_ws_list"]) == 1:
+                asyncio.create_task(update_device_state(wled_ip, entry_data))
+            else:
+                schedule_update_state(wled_ip, entry_data)
 
         # Если соединение с WLED отсутствует, запускаем его.
-        if connections["wled_ws"] is None and (connections.get("wled_task") is None or connections["wled_task"].done()):
+        if wled_ip and connections["wled_ws"] is None and (connections.get("wled_task") is None or connections["wled_task"].done()):
             connections["wled_task"] = asyncio.create_task(connect_wled_for_entry(wled_ip, entry_data))
         try:
             async for msg in ws:
@@ -144,9 +163,9 @@ class WledWSView(HomeAssistantView):
             if ws in connections["client_ws_list"]:
                 connections["client_ws_list"].remove(ws)
             _LOGGER.debug(f"Client for {entry_id} disconnected. Total clients: {len(connections['client_ws_list'])}")
-            # При отключении клиента тоже обновляем состояние устройства
+            # При отключении клиента также обновляем состояние устройства через планирование обновления
             if wled_ip:
-                asyncio.create_task(update_device_state(wled_ip, entry_data))
+                schedule_update_state(wled_ip, entry_data)
         return ws
 
 async def update_device_state(wled_ip: str, entry_data: dict):
