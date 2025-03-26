@@ -10,13 +10,20 @@
 
 **WLED Live View Proxy** is a Home Assistant integration that allows you to see a live preview of your WLED device directly on your Home Assistant dashboard. The integration is user-friendly and automatically configured: simply specify the IP address of your device, and the integration will handle the rest.
 
+
+https://github.com/user-attachments/assets/ae4ff0ef-f80a-408f-a198-dcd9a109cdf4
+
+
 > [!IMPORTANT]\
 > This integration was created with the help of ChatGPT for collaborative code writing, debugging, and editing. If you hold different views on using AI tools, please consider this. I believe this use is acceptable because the integration is non-commercial, open-source, free, and its goal is to enhance interaction and usability within Home Assistant.
+
 
 ## Main features
 
 - **Live Preview:**\
   Using a persistent WebSocket connection, the integration displays the current color scheme of your WLED device in real-time through a dedicated graphical card. The preview is shown as a CSS gradient that updates instantly.
+
+  ![image](https://github.com/user-attachments/assets/310b56dd-e898-4ca6-8a62-b66adc011661)
 
 - **Unlimited View Sessions:**\
   You're no longer limited to a single WebSocket session for viewing WLED LiveView. You can create as many sessions as your Home Assistant resources allow. The number of active connections is displayed in a dedicated sensor named "WLVP - {WLED name}". This sensor also shows the number of native WebSocket connections of the WLED device itself.
