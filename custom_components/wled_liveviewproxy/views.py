@@ -10,19 +10,19 @@ _LOGGER = logging.getLogger(__name__)
 
 def process_binary(data: bytes) -> str:
     """
-    Преобразует бинарные данные от WLED в строку CSS‑градиента.
+    Преобразует бинарные данные от WLED в строку, содержащую только цвета для CSS‑градиента.
     Если первый байт не равен 76 (ASCII 'L'), возвращает пустую строку.
     """
     if data[0] != 76:
         return ""
     offset = 4 if data[1] == 2 else 2
-    gradient = "linear-gradient(90deg,"
     colors = []
     for i in range(offset, len(data), 3):
         if i + 2 < len(data):
             colors.append("rgb({},{},{})".format(data[i], data[i+1], data[i+2]))
-    gradient += ",".join(colors) + ")"
-    return gradient
+    # Возвращаем только список цветов через запятую (без указания угла)
+    gradient_colors = ",".join(colors)
+    return gradient_colors
 
 async def delayed_update(wled_ip: str, entry_data: dict, delay: int = 10):
     await asyncio.sleep(delay)
@@ -45,7 +45,7 @@ async def connect_wled_for_entry(wled_ip: str, entry_data: dict):
     Если приходит текстовое сообщение, оно парсится как JSON. При наличии ключей "state" и "info"
     обновляет entry_data["device_state"]. Такие сообщения не отправляются клиентам.
     
-    Если приходит бинарное сообщение, оно преобразуется в строку CSS‑градиента и отправляется всем клиентам.
+    Если приходит бинарное сообщение, оно преобразуется функцией process_binary в строку с цветами и отправляется всем клиентам.
     """
     connections = entry_data.setdefault("connections", {"client_ws_list": [], "wled_ws": None, "wled_task": None})
     # Если клиентов нет – выходим
@@ -89,7 +89,7 @@ async def connect_wled_for_entry(wled_ip: str, entry_data: dict):
 
                 if data:
                     # Включать только для глубокой отладки. Создает много данных
-                    # _LOGGER.debug("Received from WLED (CSS gradient): %s", data)
+                    # _LOGGER.debug("Received from WLED (CSS gradient): %s", data)														 
                     # Рассылаем данные всем активным клиентам для данной записи
                     for client in list(connections["client_ws_list"]):
                         try:

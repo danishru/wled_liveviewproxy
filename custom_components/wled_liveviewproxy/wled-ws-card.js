@@ -89,6 +89,10 @@ class WledWsCard extends HTMLElement {
     if (!this.config.brightness) {
       this.config.brightness = 100;
     }
+    // Если угол не задан, устанавливаем по умолчанию 90°
+    if (this.config.angle === undefined || this.config.angle === null) {
+      this.config.angle = 90;
+    }
     this.initialized = true;
   }
 
@@ -136,6 +140,7 @@ class WledWsCard extends HTMLElement {
 
   _connectWebSocket() {
     const entryId = encodeURIComponent(this.config.entry_id);
+    // Здесь угол используется только на стороне клиента при формировании итогового CSS.
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const url = `${protocol}://${window.location.host}/api/wled_ws/${entryId}`;
     if (this.config.info) {
@@ -174,13 +179,17 @@ class WledWsCard extends HTMLElement {
   }
 
   handleMessage(data) {
-    // Лог "Received data" выводится только если debug включен
+    // Лог "Received data" выводится только если debug включен											  
     if (this.config.debug) {
       console.log("wled-ws-card: Received data:", data);
     }
     const cardEl = this.shadowRoot.getElementById('card');
     if (cardEl) {
-      cardEl.style.background = data;
+      // Здесь сервер возвращает только цвета, а угол формируется на стороне карточки.
+      // Если в конфигурации задан angle (0..360), используем его, иначе по умолчанию 90.
+      const angle = (this.config.angle !== undefined && this.config.angle !== null)
+        ? this.config.angle : 90;
+      cardEl.style.background = `linear-gradient(${angle}deg, ${data})`;
     }
   }
 
@@ -229,7 +238,8 @@ class WledWsCard extends HTMLElement {
       sensor: "",
       debug: false,
       info: false,
-      brightness: 100
+      brightness: 100,
+      angle: 90
     };
   }
 }
@@ -281,7 +291,8 @@ class WledWsCardEditor extends LitElement {
         color: var(--primary-text-color, #333);
       }
       .selector-wrapper,
-      .brightness-wrapper {
+      .brightness-wrapper,
+      .angle-wrapper {
         margin-bottom: 16px;
       }
       ha-formfield {
@@ -291,10 +302,12 @@ class WledWsCardEditor extends LitElement {
       ha-selector {
         width: 100%;
       }
-      .brightness-wrapper ha-textfield {
+      .brightness-wrapper ha-textfield,
+      .angle-wrapper ha-textfield {
         width: 100%;
       }
-      .brightness-wrapper label {
+      .brightness-wrapper label,
+      .angle-wrapper label {
         display: block;
         margin-bottom: 4px;
         font-weight: bold;
@@ -363,6 +376,18 @@ class WledWsCardEditor extends LitElement {
             @input="${this._brightnessChanged}">
           </ha-textfield>
         </div>
+        <!-- Поле выбора угла градиента -->
+        <div class="angle-wrapper">
+          <label>Gradient Angle (degrees)</label>
+          <ha-textfield
+            .value="${(this._config.angle !== undefined && this._config.angle !== null) ? String(this._config.angle) : '90'}"
+            type="number"
+            min="0"
+            max="360"
+            step="1"
+            @input="${this._angleChanged}">
+          </ha-textfield>
+        </div>
         <!-- Переключатели Info и Debug в одной строке -->
         <div class="switches-row">
           <ha-formfield>
@@ -393,6 +418,12 @@ class WledWsCardEditor extends LitElement {
   _brightnessChanged(e) {
     const brightness = Number(e.target.value);
     this._config = Object.assign({}, this._config, { brightness: brightness });
+    this.configChanged(this._config);
+  }
+
+  _angleChanged(e) {
+    const angle = Number(e.target.value);
+    this._config = Object.assign({}, this._config, { angle: angle });
     this.configChanged(this._config);
   }
   
