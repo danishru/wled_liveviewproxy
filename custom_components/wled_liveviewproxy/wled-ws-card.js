@@ -1,4 +1,4 @@
-import { LitElement, html, css } from 'https://cdn.skypack.dev/lit?min';
+import { LitElement, html, css } from 'https://unpkg.com/lit-element@2.0.1/lit-element.js?module';
 
 // ======================================================================
 // Основной класс карточки
@@ -179,7 +179,6 @@ class WledWsCard extends HTMLElement {
   }
 
   handleMessage(data) {
-    // Лог "Received data" выводится только если debug включен											  
     if (this.config.debug) {
       console.log("wled-ws-card: Received data:", data);
     }
@@ -209,6 +208,7 @@ class WledWsCard extends HTMLElement {
           .card-content {
             width: 100%;
             height: 100%;
+            box-sizing: border-box;
             filter: brightness(var(--card-brightness, 100%));
           }
         </style>

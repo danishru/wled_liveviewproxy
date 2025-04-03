@@ -30,5 +30,21 @@
         }
       }
     }
-  }
+},
+    "services": {
+      "send_command": {
+        "name": "Send Command",
+        "description": "Send a JSON API command to the selected WLED devices and return their response.",
+        "fields": {
+          "targets": {
+            "name": "Targets",
+            "description": "Select one or more devices or entities that belong to the WLED Live View Proxy integration."
+          },
+          "command": {
+            "name": "Command",
+            "description": "Enter a JSON object representing the command to send to the WLED device.\n\nAPI Documentation - https://kno.wled.ge/interfaces/json-api/"
+          }
+        }
+      }
+    }
 }

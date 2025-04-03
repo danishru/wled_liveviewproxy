@@ -17,6 +17,7 @@ class WledWebSocketSensor(SensorEntity):
         self._entry_id = config_entry.entry_id
         # Сохраняем конфигурацию, полученную через config_flow
         self._config = config_entry.data
+        _LOGGER.debug(f"[{self._entry_id}] WLED Sensor: Initializing sensor entity.")
 
     @property
     def unique_id(self):
@@ -32,6 +33,7 @@ class WledWebSocketSensor(SensorEntity):
         domain_entry = self.hass.data.get(DOMAIN, {}).get(self._entry_id, {})
         connections = domain_entry.get("connections", {})
         client_list = connections.get("client_ws_list", [])
+        _LOGGER.debug(f"[{self._entry_id}] WLED Sensor: State queried, active clients: {len(client_list)}")
         return len(client_list)
 
     @property
@@ -47,6 +49,7 @@ class WledWebSocketSensor(SensorEntity):
         full_state = domain_entry.get("device_state", {})
         device_on = full_state.get("state", {}).get("on")
         native_ws = full_state.get("info", {}).get("ws")
+        _LOGGER.debug(f"[{self._entry_id}] WLED Sensor: extra_state_attributes queried: device_on={device_on}, native_ws={native_ws}")
         return {"entry_id": self._entry_id, "device_on": device_on, "native_ws": native_ws}
 
     @property
@@ -66,6 +69,7 @@ class WledWebSocketSensor(SensorEntity):
         if self._config.get("control", False):
             coordinator = self.hass.data.get(DOMAIN, {}).get("coordinator", {}).get(self._entry_id)
             if coordinator is not None:
+                _LOGGER.debug(f"[{self._entry_id}] WLED Sensor: available property queried: {coordinator.device_available}")
                 return coordinator.device_available
         return True
 
@@ -73,22 +77,19 @@ class WledWebSocketSensor(SensorEntity):
         if self._config.get("control", False):
             coordinator = self.hass.data.get(DOMAIN, {}).get("coordinator", {}).get(self._entry_id)
             if coordinator:
-                _LOGGER.debug(f"WLED Sensor {self._entry_id}: coordinator update subscription established")
+                _LOGGER.debug(f"[{self._entry_id}] WLED Sensor: Coordinator update subscription established.")
                 self.async_on_remove(coordinator.async_add_listener(self._handle_coordinator_update))
             else:
-                _LOGGER.debug(f"WLED Sensor {self._entry_id}: coordinator not found during hass startup")
+                _LOGGER.debug(f"[{self._entry_id}] WLED Sensor: Coordinator not found during hass startup.")
 
     def _handle_coordinator_update(self):
-        _LOGGER.debug(f"WLED Sensor {self._entry_id}: _handle_coordinator_update called")
+        _LOGGER.debug(f"[{self._entry_id}] WLED Sensor: _handle_coordinator_update called.")
         coordinator = self.hass.data.get(DOMAIN, {}).get("coordinator", {}).get(self._entry_id)
         if coordinator and coordinator.data:
             domain_data = self.hass.data.setdefault(DOMAIN, {})
             entry_data = domain_data.setdefault(self._entry_id, {})
             entry_data["device_state"] = coordinator.data
-						  
-            _LOGGER.debug(f"WLED Sensor {self._entry_id} updated device_state: {coordinator.data}")
-			 
+            _LOGGER.debug(f"[{self._entry_id}] WLED Sensor: Updated device_state: {coordinator.data}")
         else:
-            _LOGGER.debug(f"WLED Sensor {self._entry_id}: no data received from coordinator")
+            _LOGGER.debug(f"[{self._entry_id}] WLED Sensor: No data received from coordinator.")
         self.async_write_ha_state()
-

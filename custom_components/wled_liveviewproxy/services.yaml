@@ -1,0 +1,22 @@
+send_command:
+  description: >
+    Sends a JSON API command to the selected WLED devices and returns their response.
+    This service sends the provided JSON command via WebSocket and waits for the updated device state.
+  fields:
+    targets:
+      name: "Devices"
+      description: "Select one or more devices that belong to the WLED Live View Proxy integration."
+      required: true
+      selector:
+        target:
+          device:
+            integration: wled_liveviewproxy
+          entity:
+            integration: wled_liveviewproxy
+    command:
+      name: "Command"
+      description: "Enter a JSON object representing the command to send to the WLED device."
+      required: true
+      selector:
+        object: {}
+      example: {"on": true}

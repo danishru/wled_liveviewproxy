@@ -36,7 +36,9 @@ def schedule_update_state(wled_ip: str, entry_data: dict, delay: int = 10):
     existing_task = entry_data.get("update_timer")
     if existing_task is not None and not existing_task.done():
         existing_task.cancel()
+        _LOGGER.debug("[%s] Existing update_timer cancelled.", entry_data.get("entry_id", "unknown"))
     entry_data["update_timer"] = asyncio.create_task(delayed_update(wled_ip, entry_data, delay))
+    _LOGGER.debug("[%s] Scheduled update_state with delay %s seconds.", entry_data.get("entry_id", "unknown"), delay)
 
 async def connect_wled_for_entry(wled_ip: str, entry_data: dict):
     """
@@ -48,24 +50,26 @@ async def connect_wled_for_entry(wled_ip: str, entry_data: dict):
     Если приходит бинарное сообщение, оно преобразуется функцией process_binary в строку с цветами и отправляется всем клиентам.
     """
     connections = entry_data.setdefault("connections", {"client_ws_list": [], "wled_ws": None, "wled_task": None})
+    entry_id = entry_data.get("entry_id", "unknown")
     # Если клиентов нет – выходим
     if not connections["client_ws_list"]:
-        _LOGGER.debug("No active clients for this entry. Exiting connect_wled_for_entry.")
+        _LOGGER.debug("[%s] No active clients. Exiting connect_wled_for_entry.", entry_id)
         return
     try:
         async with ClientSession() as session:
-            _LOGGER.debug(f"Attempting to connect to WLED at ws://{wled_ip}/ws for this entry...")
+            _LOGGER.debug("[%s] Attempting to connect to WLED at ws://%s/ws for this entry...", entry_id, wled_ip)
             connections["wled_ws"] = await asyncio.wait_for(
                 session.ws_connect(f"ws://{wled_ip}/ws"), timeout=5
             )
-            _LOGGER.debug("Connected to WLED. Sending live preview command.")
+            _LOGGER.debug("[%s] Connected to WLED.", entry_id)
+            _LOGGER.debug("[%s] Sending live preview command.", entry_id)
             await connections["wled_ws"].send_str("{'lv':true}")
             while True:
                 try:
                     # Ожидаем сообщение от WLED с таймаутом 5 секунд
                     msg = await asyncio.wait_for(connections["wled_ws"].receive(), timeout=5)
                 except asyncio.TimeoutError:
-                    _LOGGER.debug("No message received in 5 seconds. Exiting connection.")
+                    _LOGGER.debug("[%s] No message received in 5 seconds. Exiting connection.", entry_id)
                     break
 
                 if msg.type == WSMsgType.TEXT:
@@ -75,21 +79,20 @@ async def connect_wled_for_entry(wled_ip: str, entry_data: dict):
                         json_data = json.loads(data)
                         if "state" in json_data and "info" in json_data:
                             entry_data["device_state"] = json_data
+                            _LOGGER.debug("[%s] Updated device state via live preview.", entry_id)
                     except Exception as e:
-                        _LOGGER.error("Error parsing JSON in TEXT message: %s", e)
+                        _LOGGER.error("[%s] Error parsing JSON in TEXT message: %s", entry_id, e)
                     # Не ретранслируем текстовое сообщение клиентам
                     continue
                 elif msg.type == WSMsgType.BINARY:
                     data = process_binary(msg.data)
                 elif msg.type in (WSMsgType.CLOSED, WSMsgType.ERROR):
-                    _LOGGER.debug("WLED reported CLOSED/ERROR message. Exiting connection.")
+                    _LOGGER.debug("[%s] WLED reported CLOSED/ERROR message. Exiting connection.", entry_id)
                     break
                 else:
                     data = ""
 
                 if data:
-                    # Включать только для глубокой отладки. Создает много данных
-                    # _LOGGER.debug("Received from WLED (CSS gradient): %s", data)														 
                     # Рассылаем данные всем активным клиентам для данной записи
                     for client in list(connections["client_ws_list"]):
                         try:
@@ -97,11 +100,12 @@ async def connect_wled_for_entry(wled_ip: str, entry_data: dict):
                         except Exception:
                             if client in connections["client_ws_list"]:
                                 connections["client_ws_list"].remove(client)
+                                _LOGGER.debug("[%s] Removed client due to send error.", entry_id)
     except Exception as e:
-        _LOGGER.error("Error connecting to WLED: %s", str(e))
+        _LOGGER.error("[%s] Error connecting to WLED: %s", entry_id, str(e))
     finally:
         connections["wled_ws"] = None
-        _LOGGER.debug("WLED connection lost or not established for this entry. Not auto-reconnecting.")
+        _LOGGER.debug("[%s] WLED connection lost or not established for this entry. Not auto-reconnecting.", entry_id)
 
 class WledWSView(HomeAssistantView):
     """
@@ -120,9 +124,9 @@ class WledWSView(HomeAssistantView):
     async def get(self, request: web.Request, entry_id) -> web.WebSocketResponse:
         hass = request.app["hass"]
         domain_data = hass.data.setdefault(DOMAIN, {})
-        # Получаем конфигурацию интеграции (WLED IP) для указанного entry_id
+        # Получаем конфигурацию интеграции для данного entry_id
         config_data = domain_data.setdefault("configs", {}).get(entry_id, {})
-        # Получаем или создаём единое хранилище для данной записи
+        # Получаем или создаём хранилище для данной записи
         entry_data = domain_data.setdefault(entry_id, {})
         entry_data.setdefault("connections", {"client_ws_list": [], "wled_ws": None, "wled_task": None})
         entry_data.setdefault("device_state", {})
@@ -136,7 +140,7 @@ class WledWSView(HomeAssistantView):
         await ws.prepare(request)
         ws.last_heartbeat = time.time()
         connections["client_ws_list"].append(ws)
-        _LOGGER.debug(f"New WS client for {entry_id} connected. Total clients: {len(connections['client_ws_list'])}")
+        _LOGGER.debug("[%s] New WS client connected. Total clients: %s", entry_id, len(connections["client_ws_list"]))
 
         wled_ip = config_data.get("wled_ip")
         if wled_ip:
@@ -150,32 +154,29 @@ class WledWSView(HomeAssistantView):
         # Если соединение с WLED отсутствует, запускаем его.
         if wled_ip and connections["wled_ws"] is None and (connections.get("wled_task") is None or connections["wled_task"].done()):
             connections["wled_task"] = asyncio.create_task(connect_wled_for_entry(wled_ip, entry_data))
+            _LOGGER.debug("[%s] Started WLED connection task.", entry_id)
         try:
             async for msg in ws:
                 if msg.type == WSMsgType.TEXT:
                     # Обновляем heartbeat при получении сообщения "heartbeat"
                     if msg.data.strip().lower() == "heartbeat":
                         ws.last_heartbeat = time.time()
-                        _LOGGER.debug("Heartbeat received from client.")
+                        _LOGGER.debug("[%s] Heartbeat received from client.", entry_id)
         except Exception as e:
-            _LOGGER.error("Client connection error: %s", e)
+            _LOGGER.error("[%s] Client connection error: %s", entry_id, e)
         finally:
             if ws in connections["client_ws_list"]:
                 connections["client_ws_list"].remove(ws)
-            _LOGGER.debug(f"Client for {entry_id} disconnected. Total clients: {len(connections['client_ws_list'])}")
+            _LOGGER.debug("[%s] Client disconnected. Total clients: %s", entry_id, len(connections["client_ws_list"]))
             # При отключении клиента также обновляем состояние устройства через планирование обновления
             if wled_ip:
                 schedule_update_state(wled_ip, entry_data)
         return ws
 
 async def update_device_state(wled_ip: str, entry_data: dict):
-    """
-    Устанавливает временное WS-соединение с WLED, отправляет команду {"v": true},
-    получает полный JSON-ответ и обновляет entry_data["device_state"] для данной записи.
-    """
     try:
         async with ClientSession() as session:
-            _LOGGER.debug(f"Updating device state from WLED at ws://{wled_ip}/ws...")
+            _LOGGER.debug("[%s] Updating device state from WLED at ws://%s/ws...", entry_data.get("entry_id", "unknown"), wled_ip)
             ws = await asyncio.wait_for(session.ws_connect(f"ws://{wled_ip}/ws"), timeout=5)
             await ws.send_str('{"v": true}')
             msg = await asyncio.wait_for(ws.receive(), timeout=10)
@@ -184,9 +185,9 @@ async def update_device_state(wled_ip: str, entry_data: dict):
                     json_data = json.loads(msg.data)
                     if "state" in json_data and "info" in json_data:
                         entry_data["device_state"] = json_data
-                        _LOGGER.debug("Device state updated via {'v': true} command.")
+                        _LOGGER.debug("[%s] Device state updated via {'v': true} command.", entry_data.get("entry_id", "unknown"))
                 except Exception as e:
-                    _LOGGER.error("Error parsing JSON in update_device_state: %s", e)
+                    _LOGGER.error("[%s] Error parsing JSON in update_device_state: %s", entry_data.get("entry_id", "unknown"), e)
             await ws.close()
     except Exception as e:
-        _LOGGER.error("Error updating device state: %s", e)
+        _LOGGER.error("[%s] Error updating device state: %s", entry_data.get("entry_id", "unknown"), e)

@@ -30,5 +30,21 @@
         }
       }
     }
+  },
+"services": {
+  "send_command": {
+    "name": "Отправить команду",
+    "description": "Отправляет JSON API команду на выбранные устройства WLED и возвращает их ответ.",
+    "fields": {
+      "targets": {
+        "name": "Цели",
+        "description": "Выберите одно или несколько устройств или сущностей, принадлежащих интеграции WLED Live View Proxy."
+      },
+      "command": {
+        "name": "Команда",
+        "description": "Введите JSON объект, представляющий команду для отправки на устройство WLED.\n\nДокументация по API - https://kno.wled.ge/interfaces/json-api/"
+      }
+    }
   }
+}
 }
