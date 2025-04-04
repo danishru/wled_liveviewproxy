@@ -159,7 +159,7 @@ Once minimally configured, a sensor will be created. Next, add the card to your 
 
 ## JSON API Command Service
 
-When **Control Mode** is enabled, the integration provides access to a special Home Assistant service \`wled_liveviewproxy.send_command\`, which allows you to send any [WLED JSON API](https://kno.wled.ge/interfaces/json-api/) command directly to your device.
+When **Control Mode** is enabled, the integration provides access to a special Home Assistant service `wled_liveviewproxy.send_command`, which allows you to send any [WLED JSON API](https://kno.wled.ge/interfaces/json-api/) command directly to your device.
 
 This service is especially useful in **automations** and **scripts**, where you need precise control over effects, segments, presets, or Nightlight mode. It also returns the full WLED state (`state` + `info`), just like a `/json/si` response — if the command includes `"v": true`.  
 Otherwise, the response may be a simple `{"success": true}` depending on the type of command.  
@@ -210,7 +210,7 @@ Otherwise, the response may be a simple `{"success": true}` depending on the typ
   ```
 
 > [!TIP]
-> You can use both \`device_id\` and \`entity_id\` in the \`targets\` field. The service will automatically resolve and dispatch the command to the correct device.
+> You can use both `device_id` and `entity_id` in the `targets` field. The service will automatically resolve and dispatch the command to the correct device.
 
 
 ## How it works
