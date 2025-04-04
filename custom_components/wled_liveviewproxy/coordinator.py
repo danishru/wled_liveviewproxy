@@ -85,9 +85,14 @@ async def connect_ws_for_coordinator(wled_ip: str, coordinator: "WLEDDataCoordin
                             _LOGGER.debug("[%s] Parsed JSON data: %s", entry_id, json_data)
                             if "state" in json_data:
                                 coordinator.process_new_data(json_data)
+                            elif "success" in json_data:
+                                if coordinator._pending_response_future is not None and not coordinator._pending_response_future.done():
+                                    coordinator._pending_response_future.set_result(json_data)
+                                coordinator.device_available = True
+                                _LOGGER.debug("[%s] Received success response: %s", entry_id, json_data)
                             else:
                                 coordinator.device_available = True
-                                _LOGGER.debug("[%s] Received response without 'state', setting device_available=True", entry_id)
+                                _LOGGER.debug("[%s] Received response without 'state' or 'success', setting device_available=True", entry_id)
                         except Exception as e:
                             _LOGGER.error("[%s] Error parsing JSON: %s", entry_id, e)
                 elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
