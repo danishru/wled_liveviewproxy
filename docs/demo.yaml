@@ -1,0 +1,521 @@
+views:
+  - type: sections
+    max_columns: 4
+    title: WLED Live View Proxy
+    path: wled
+    sections:
+      - type: grid
+        cards:
+          - type: tile
+            features_position: bottom
+            vertical: false
+            hide_state: false
+            entity: update.wled_bulbs_firmware
+            show_entity_picture: true
+            name: WLED-bulbs
+            state_content: installed_version
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: tile
+            features_position: bottom
+            vertical: false
+            entity: sensor.wlvp_wled_bulbs
+            hide_state: false
+            show_entity_picture: false
+            state_content:
+              - state
+              - native_ws
+          - type: custom:vertical-stack-in-card
+            cards:
+              - type: conditional
+                conditions:
+                  - condition: state
+                    entity: light.wled_bulbs
+                    state: 'on'
+                card:
+                  type: custom:wled-ws-card
+                  sensor: sensor.wlvp_wled_bulbs
+              - type: custom:mushroom-light-card
+                entity: light.wled_bulbs
+                fill_container: false
+                use_light_color: false
+                show_brightness_control: true
+                show_color_control: false
+                collapsible_controls: true
+                show_color_temp_control: false
+                grid_options:
+                  columns: 12
+                  rows: 1
+                layout: horizontal
+                primary_info: none
+              - type: custom:mushroom-select-card
+                entity: select.wled_bulbs_preset
+                fill_container: false
+                layout: horizontal
+                secondary_info: none
+                primary_info: none
+                name: Предустановка
+              - type: custom:mushroom-select-card
+                entity: select.wled_bulbs_color_palette
+                layout: horizontal
+                primary_info: none
+                secondary_info: none
+              - type: custom:mushroom-select-card
+                entity: input_select.effect_wled_bulbs_selector
+                layout: horizontal
+                primary_info: none
+                secondary_info: none
+          - type: custom:wled-ws-card
+            sensor: sensor.wlvp_wled_bulbs
+            debug: false
+            info: false
+            grid_options:
+              columns: 6
+              rows: 1
+            brightness: 100
+            angle: 25
+          - type: custom:wled-ws-card
+            sensor: sensor.wlvp_wled_bead
+            debug: false
+            info: false
+            brightness: 100
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: custom:vertical-stack-in-card
+            cards:
+              - type: custom:wled-ws-card
+                sensor: sensor.wlvp_wled_bulbs
+                debug: false
+                info: false
+                grid_options:
+                  columns: 12
+                  rows: 1
+                card_mod:
+                  style: |
+                    ha-card {
+                      height: 25px;
+                      width: 90%;
+                      border-radius: 14px;
+                      border-style: hidden;
+                      margin: 10px;
+                      margin-left: auto;
+                      margin-right: auto;
+                    }
+              - type: custom:wled-ws-card
+                sensor: sensor.wlvp_wled_bead
+                grid_options:
+                  columns: 12
+                  rows: 2
+                card_mod:
+                  style: |
+                    ha-card {
+                      height: 45px;
+                      width: 50%;
+                      border-style: hidden;
+                      margin: 20px;
+                      margin-left: auto;
+                    }
+      - type: grid
+        cards:
+          - type: tile
+            features_position: bottom
+            vertical: false
+            hide_state: false
+            entity: update.wled_bead_firmware
+            show_entity_picture: true
+            name: WLED-bead
+            state_content: installed_version
+            grid_options:
+              columns: 6
+              rows: 1
+          - type: tile
+            features_position: bottom
+            vertical: false
+            entity: sensor.wlvp_wled_bead
+            hide_state: false
+            show_entity_picture: false
+            state_content:
+              - state
+              - native_ws
+          - type: custom:vertical-stack-in-card
+            cards:
+              - type: conditional
+                conditions:
+                  - condition: state
+                    entity: light.wlvp_wled_bead
+                    state: 'on'
+                card:
+                  type: custom:wled-ws-card
+                  sensor: sensor.wlvp_wled_bead
+                  grid_options:
+                    columns: 12
+                    rows: 2
+                  card_mod:
+                    style: |
+                      ha-card {
+                        height: 35px;
+                        width: 50%;
+                        border-radius: 14px;
+                        border-style: hidden;
+                        margin: 9px;
+                        float: right ;
+                      }
+              - type: custom:mushroom-light-card
+                entity: light.wled_bead_main
+                fill_container: false
+                use_light_color: false
+                show_brightness_control: true
+                show_color_control: false
+                collapsible_controls: true
+                show_color_temp_control: false
+                grid_options:
+                  columns: 12
+                  rows: 1
+                layout: horizontal
+                primary_info: none
+              - type: custom:mushroom-select-card
+                entity: select.wled_bead_color_palette
+                layout: horizontal
+                primary_info: none
+                secondary_info: none
+              - type: conditional
+                conditions:
+                  - condition: state
+                    entity: light.wled_bead
+                    state: 'on'
+                card:
+                  type: custom:wled-ws-card
+                  sensor: sensor.wlvp_wled_bead
+                  brightness: 100
+                  card_mod:
+                    style: |
+                      ha-card {
+                        height: 10px;
+                      }
+          - type: custom:wled-ws-card
+            sensor: ''
+            debug: false
+            info: false
+            brightness: 175
+            angle: 113
+            grid_options:
+              rows: 2
+              columns: 3
+            card_mod:
+              style: |
+                ha-card {
+                  height: 100%;
+                  width: 100%;
+                  border-radius: 0%;
+                }
+          - type: custom:wled-ws-card
+            sensor: ''
+            debug: false
+            info: false
+            brightness: 175
+            angle: 55
+            card_mod:
+              style: |
+                ha-card {
+                  height: 100%;
+                  width: 100%;
+                  border-radius: 0%;
+                }
+            grid_options:
+              rows: 2
+              columns: 3
+          - type: custom:wled-ws-card
+            sensor: sensor.wlvp_wled_bead
+            grid_options:
+              columns: 4
+              rows: 2
+            brightness: 175
+            card_mod:
+              style: |
+                ha-card {
+                  height: 120px;
+                  width: 120px;
+                  border-radius: 100%;
+                }
+          - type: custom:wled-ws-card
+            sensor: sensor.wlvp_wled_bead
+            debug: false
+            info: false
+            brightness: 175
+            angle: 0
+            grid_options:
+              columns: 1
+              rows: 4
+          - type: custom:wled-ws-card
+            sensor: sensor.wlvp_wled_bead
+            debug: false
+            info: false
+            brightness: 170
+            angle: 180
+            grid_options:
+              columns: 1
+              rows: 4
+          - type: custom:wled-ws-card
+            sensor: ''
+            debug: false
+            info: false
+            brightness: 175
+            angle: 12
+            grid_options:
+              rows: 2
+              columns: 3
+            card_mod:
+              style: |
+                ha-card {
+                  height: 100%;
+                  width: 100%;
+                  border-radius: 0%;
+                }
+          - type: custom:wled-ws-card
+            sensor: ''
+            debug: false
+            info: false
+            brightness: 175
+            angle: 236
+            grid_options:
+              rows: 2
+              columns: 3
+            card_mod:
+              style: |
+                ha-card {
+                  height: 100%;
+                  width: 100%;
+                  border-radius: 0%;
+                }
+          - type: custom:wled-ws-card
+            sensor: sensor.wlvp_wled_bead
+            grid_options:
+              columns: 4
+              rows: 2
+            angle: 210
+            brightness: 175
+            card_mod:
+              style: |
+                ha-card {
+                  height: 130px;
+                  width: 130px;
+                  border-radius: 100%;
+                  clip-path: polygon(
+                    50% 0%,
+                    61% 35%,
+                    98% 35%,
+                    68% 57%,
+                    79% 91%,
+                    50% 70%,
+                    21% 91%,
+                    32% 57%,
+                    2% 35%,
+                    39% 35%
+                  );
+                }
+          - type: custom:wled-ws-card
+            sensor: sensor.wlvp_wled_bead
+            debug: false
+            info: false
+            brightness: 175
+            angle: 270
+          - type: custom:wled-ws-card
+            sensor: sensor.wlvp_wled_bead
+            debug: false
+            info: false
+            brightness: 175
+            angle: 90
+      - type: grid
+        cards:
+          - type: heading
+            icon: ''
+            heading: Different card brightness
+            heading_style: title
+          - type: custom:wled-ws-card
+            sensor: sensor.wlvp_wled_bead
+            debug: false
+            info: true
+            brightness: 100
+            angle: 0
+          - type: custom:wled-ws-card
+            sensor: sensor.wlvp_wled_bulbs
+            debug: false
+            info: false
+            brightness: 100
+            grid_options:
+              columns: 12
+              rows: 1
+          - type: custom:wled-ws-card
+            sensor: sensor.wlvp_wled_bead
+            debug: false
+            info: true
+            brightness: 50
+            angle: 10
+          - type: custom:wled-ws-card
+            sensor: sensor.wlvp_wled_bulbs
+            debug: false
+            info: false
+            brightness: 50
+          - type: custom:wled-ws-card
+            sensor: sensor.wlvp_wled_bulbs
+            debug: false
+            info: false
+            brightness: 200
+            angle: 160
+    header:
+      card:
+        type: markdown
+        content: |-
+          `
+          `
+          `
+          `
+        title: WLED Live View Proxy for Home Assistant
+        text_only: true
+    cards: []
+    badges:
+      - type: custom:mushroom-template-badge
+        content: WLED Live View Proxy for Home Assistant
+        icon: ''
+        color: red
+        entity: WLED Live View Proxy for Home Assistant
+      - type: custom:mushroom-template-badge
+        content: https://github.com/danishru/wled_liveviewproxy
+        icon: ''
+        color: ''
+        label: ''
+  - type: sections
+    max_columns: 4
+    title: ANGLE
+    path: angle
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-light-card
+            entity: light.wled_bead
+            fill_container: false
+            use_light_color: false
+            show_brightness_control: true
+            show_color_control: false
+            collapsible_controls: true
+            show_color_temp_control: false
+            grid_options:
+              columns: 12
+              rows: 1
+            layout: horizontal
+            primary_info: none
+          - type: custom:wled-ws-card
+            sensor: sensor.wlvp_wled_bead
+            debug: false
+            info: false
+            brightness: 100
+            angle: 270
+          - type: custom:wled-ws-card
+            sensor: sensor.wlvp_wled_bead
+            debug: false
+            info: false
+            brightness: 100
+            angle: 90
+          - features:
+              - type: light-brightness
+              - type: toggle
+            type: tile
+            entity: light.wled_bead
+            features_position: bottom
+            vertical: false
+            hide_state: false
+            show_entity_picture: false
+            icon_tap_action:
+              action: none
+            state_content:
+              - effect
+              - color_mode
+            grid_options:
+              rows: 3
+              columns: 6
+          - type: custom:wled-ws-card
+            sensor: ''
+            debug: false
+            info: false
+            brightness: 175
+            angle: 55
+            card_mod:
+              style: |
+                ha-card {
+                  height: 100%;
+                  width: 100%;
+                  border-radius: 0%;
+                }
+            grid_options:
+              rows: 2
+              columns: 3
+          - type: custom:wled-ws-card
+            sensor: ''
+            debug: false
+            info: false
+            brightness: 175
+            angle: 12
+            grid_options:
+              rows: 2
+              columns: 3
+            card_mod:
+              style: |
+                ha-card {
+                  height: 100%;
+                  width: 100%;
+                  border-radius: 0%;
+                }
+          - type: custom:wled-ws-card
+            sensor: ''
+            debug: false
+            info: false
+            brightness: 175
+            angle: 113
+            grid_options:
+              rows: 2
+              columns: 3
+            card_mod:
+              style: |
+                ha-card {
+                  height: 100%;
+                  width: 100%;
+                  border-radius: 0%;
+                }
+          - type: custom:wled-ws-card
+            sensor: ''
+            debug: false
+            info: false
+            brightness: 175
+            angle: 236
+            grid_options:
+              rows: 2
+              columns: 3
+            card_mod:
+              style: |
+                ha-card {
+                  height: 100%;
+                  width: 100%;
+                  border-radius: 0%;
+                }
+      - type: grid
+        cards:
+          - type: custom:wled-ws-card
+            sensor: sensor.wlvp_wled_bead
+            debug: false
+            info: false
+            brightness: 100
+            angle: 0
+            grid_options:
+              rows: 7
+              columns: 1
+          - type: custom:wled-ws-card
+            sensor: sensor.wlvp_wled_bead
+            debug: false
+            info: false
+            brightness: 100
+            angle: 180
+            grid_options:
+              columns: 6
+              rows: 4
