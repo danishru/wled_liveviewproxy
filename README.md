@@ -189,14 +189,14 @@ Otherwise, the response may be a simple `{"success": true}` depending on the typ
     command: {"nl":{"on":true,"dur":45,"mode":3,"tbri":255},"v":true}
   ```
 
-- **Instant activation of preset № 5:**
+- **Activate effect on segment 1 with freeze, custom colors, and palette 0:**
   ```yaml
   action: wled_liveviewproxy.send_command
   data:
     targets:
       device_id: "<your_device_id>"
       entity_id: "<your_entity_id>"
-    command: {"ps":5}
+    command: {"seg":[{"id":1,"on":true,"col":["ffffff","000000"],"frz":t,"fx":25,"pal":0,"bri":255}]}
   ```
 
 - **Custom lighting per segment:**
