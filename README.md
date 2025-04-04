@@ -19,13 +19,27 @@ https://github.com/user-attachments/assets/ae4ff0ef-f80a-408f-a198-dcd9a109cdf4
 > [!IMPORTANT]\
 > This integration was created with the help of ChatGPT for collaborative code writing, debugging, and editing. If you hold different views on using AI tools, please consider this. I believe this use is acceptable because the integration is non-commercial, open-source, free, and its goal is to enhance interaction and usability within Home Assistant.
 
+## 🆕 What’s New in v0.2.1
+
+### ✨ New Features
+- **🧠 [JSON API Command Service](https://github.com/danishru/wled_liveviewproxy#json-api-command-service)**  
+  Added `wled_liveviewproxy.send_command` — a new service for sending JSON commands via WebSocket with **optional full state return**.
+  
+- **🎛️ Gradient Rotation Support**  
+  The `wled-ws-card.js` card now supports rotating the gradient direction directly in its config.
+
+### 🔄 Updates
+- Debug logging improved, WebSocket command handling optimized, and LitElement CDN updated with styling fixes.
+
+[![Read full release notes for v0.2.1](https://img.shields.io/badge/Read--release--notes-v0.2.1-blue?style=for-the-badge)](https://github.com/danishru/wled_liveviewproxy/releases/tag/v0.2.1)
+
 
 ## Main features
 
-- **Live Preview:**\
-  Using a persistent WebSocket connection, the integration displays the current color scheme of your WLED device in real-time through a dedicated graphical card. The preview is shown as a CSS gradient that updates instantly.
+- **Live Preview:**  
+  Using a persistent WebSocket connection, the integration displays the current color scheme of your WLED device in real-time through a dedicated graphical card. The preview is shown as a CSS gradient that updates instantly. Additionally, the card supports adjusting gradient brightness and direction.
 
-  ![image](https://github.com/user-attachments/assets/310b56dd-e898-4ca6-8a62-b66adc011661)
+   ![image](https://github.com/user-attachments/assets/f5bc0e22-cb83-40f1-a975-88f843e57ece)
 
 - **Unlimited View Sessions:**\
   You're no longer limited to a single WebSocket session for viewing WLED LiveView. You can create as many sessions as your Home Assistant resources allow. The number of active connections is displayed in a dedicated sensor named "WLVP - {WLED name}". This sensor also shows the number of native WebSocket connections of the WLED device itself.
@@ -45,6 +59,11 @@ https://github.com/user-attachments/assets/ae4ff0ef-f80a-408f-a198-dcd9a109cdf4
   Enabling control mode updates sensor data instantly and activates device availability notifications. This uses an additional WebSocket connection to your WLED device. It also adds a light entity named "WLVP - {WLED name}", supporting basic operations (on/off and brightness adjustment) via WebSocket.
   
   ![image](https://github.com/user-attachments/assets/2108b262-2b22-47be-8ba8-f2a24d821339)
+
+- **JSON API Command Service:**  
+  When **Control Mode** is enabled, you can send direct [JSON API commands](https://kno.wled.ge/interfaces/json-api/) to your WLED devices using the dedicated Home Assistant service `wled_liveviewproxy.send_command`. This service is particularly convenient for use in automations and scripts, allowing advanced device control and functionality beyond the standard capabilities of the official WLED integration.
+
+  ![image](https://github.com/user-attachments/assets/a42ef8b6-9890-44de-9bed-6ebf6e3a7cd3)
 
 ## Installation
 
@@ -108,23 +127,91 @@ Or open **Settings → Integrations** in Home Assistant, find `WLED Live View Pr
 ## Card Setup
 
 Once minimally configured, a sensor will be created. Next, add the card to your dashboard—it'll appear as "WLED Live View Card". The card features a simple and clear configuration interface, immediately displaying the Live View of the first sensor listed. You can easily select your desired sensor in the provided field. Additionally, you can adjust the gradient brightness. If you encounter issues, enable Info Mode or Debug Mode to view extra information in the browser console. 
-![image](https://github.com/user-attachments/assets/75502756-684c-41c1-832a-418eab5b3686)
-The card’s style can be customized with [lovelace-card-mod](https://github.com/thomasloven/lovelace-card-mod). Example of a round card using Card Mod:
 
-```yaml
-type: custom:wled-ws-card
-sensor: sensor.wlvp_wled_bead
-grid_options:
-  columns: 12
-  rows: 2
-card_mod:
-  style: |
-    ha-card {
-      height: 100px;
-      width: 100px;
-      border-radius: 100%;
-    }
-```
+> [!IMPORTANT]\
+> The card uses `LitElement`, imported from an external CDN by default. If the card fails to load, it may be due to **CDN unavailability** (e.g., network restrictions or offline access). In this case, you can modify the import path in the `wled-ws-card.js` file to use a local or bundled version of LitElement.
+
+![image](https://github.com/user-attachments/assets/4b82ed54-2a7c-44ca-97e7-cbef8c2dd7f8)
+
+> [!TIP]
+> The card’s style can be customized with [lovelace-card-mod](https://github.com/thomasloven/lovelace-card-mod).
+> Example of a round card using Card Mod:
+> ```yaml
+>type: custom:wled-ws-card
+>sensor: "<your_entity_id>"
+>grid_options:
+>  columns: 12
+>  rows: 2
+>card_mod:
+>  style: |
+>    ha-card {
+>      height: 100px;
+>      width: 100px;
+>      border-radius: 100%;
+>    }
+>```
+
+
+> [!TIP]
+>You can also try the card quickly by importing the demo dashboard configuration from  
+>[`docs/demo.yaml`](https://github.com/danishru/wled_liveviewproxy/blob/main/docs/demo.yaml) available in the repository.
+
+
+## JSON API Command Service
+
+When **Control Mode** is enabled, the integration provides access to a special Home Assistant service \`wled_liveviewproxy.send_command\`, which allows you to send any [WLED JSON API](https://kno.wled.ge/interfaces/json-api/) command directly to your device.
+
+This service is especially useful in **automations** and **scripts**, where you need precise control over effects, segments, presets, or Nightlight mode. It also returns the full WLED state (`state` + `info`), just like a `/json/si` response — if the command includes `"v": true`.  
+Otherwise, the response may be a simple `{"success": true}` depending on the type of command.  
+
+> [!IMPORTANT]\
+> The command is sent as-is — keys are not validated, and there is no error handling if the device responds with an invalid or partial state.
+
+### Examples
+
+- **Activate Nightlight with fade effect:**
+  ```yaml
+  action: wled_liveviewproxy.send_command
+  data:
+    targets:
+      device_id: "<your_device_id>"
+      entity_id: "<your_entity_id>"
+    command: {"nl":{"on":true,"dur":30,"mode":1}}
+  ```
+
+- **Nightlight with sunrise simulation (mode 3) + return full state (`"v": true`):**
+  ```yaml
+  action: wled_liveviewproxy.send_command
+  data:
+    targets:
+      device_id: "<your_device_id>"
+      entity_id: "<your_entity_id>"
+    command: {"nl":{"on":true,"dur":45,"mode":3,"tbri":255},"v":true}
+  ```
+
+- **Instant activation of preset № 5:**
+  ```yaml
+  action: wled_liveviewproxy.send_command
+  data:
+    targets:
+      device_id: "<your_device_id>"
+      entity_id: "<your_entity_id>"
+    command: {"ps":5}
+  ```
+
+- **Custom lighting per segment:**
+  ```yaml
+  action: wled_liveviewproxy.send_command
+  data:
+    targets:
+      device_id: "<your_device_id>"
+      entity_id: "<your_entity_id>"
+    command: {"seg":[{"id":0,"on":true,"fx":71,"col":["ff00ff"]},{"id":1,"on":true,"fx":78,"bri":200,"col":["0000ff","00ffc8"],"sx":150}]}
+  ```
+
+> [!TIP]
+> You can use both \`device_id\` and \`entity_id\` in the \`targets\` field. The service will automatically resolve and dispatch the command to the correct device.
+
 
 ## How it works
 
