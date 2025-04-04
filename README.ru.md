@@ -183,14 +183,14 @@ https://github.com/user-attachments/assets/ae4ff0ef-f80a-408f-a198-dcd9a109cdf4
     command: {"nl":{"on":true,"dur":45,"mode":3,"tbri":255},"v":true}
   ```
 
-- **Мгновенное включение пресета № 5:**
+- **Активация эффекта на сегменте 1 с заморозкой, пользовательскими цветами и палитрой 0:**
   ```yaml
   action: wled_liveviewproxy.send_command
   data:
     targets:
       device_id: "<your_device_id>"
       entity_id: "<your_entity_id>"
-    command: {"ps":5}
+    command: {"seg":[{"id":1,"on":true,"col":["ffffff","000000"],"frz":true,"fx":25,"pal":0,"bri":255}]}
   ```
 
 - **Индивидуальное освещение по сегментам:**
