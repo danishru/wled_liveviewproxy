@@ -19,16 +19,24 @@ https://github.com/user-attachments/assets/ae4ff0ef-f80a-408f-a198-dcd9a109cdf4
 > [!IMPORTANT]\
 > This integration was created with the help of ChatGPT for collaborative code writing, debugging, and editing. If you hold different views on using AI tools, please consider this. I believe this use is acceptable because the integration is non-commercial, open-source, free, and its goal is to enhance interaction and usability within Home Assistant.
 
-## 🆕 What’s New in v0.2.1
+## 🆕 What’s New in v0.2.2
 
-### ✨ New Features
+### Updates 🔄
+- `wled-ws-card.js` now works fully offline and no longer depends on the CDN or external imports.
+
+[![Read full release notes for v0.2.2](https://img.shields.io/badge/Read--release--notes-v0.2.2-blue?style=for-the-badge)](https://github.com/danishru/wled_liveviewproxy/releases/tag/v0.2.2)
+
+
+### 🆕 What’s New in v0.2.1
+
+#### ✨ New Features
 - **🧠 [JSON API Command Service](https://github.com/danishru/wled_liveviewproxy#json-api-command-service)**  
   Added `wled_liveviewproxy.send_command` — a new service for sending JSON commands via WebSocket with **optional full state return**.
   
 - **🎛️ Gradient Rotation Support**  
   The `wled-ws-card.js` card now supports rotating the gradient direction directly in its config.
 
-### 🔄 Updates
+#### 🔄 Updates
 - Debug logging improved, WebSocket command handling optimized, and LitElement CDN updated with styling fixes.
 
 [![Read full release notes for v0.2.1](https://img.shields.io/badge/Read--release--notes-v0.2.1-blue?style=for-the-badge)](https://github.com/danishru/wled_liveviewproxy/releases/tag/v0.2.1)
@@ -67,15 +75,6 @@ https://github.com/user-attachments/assets/ae4ff0ef-f80a-408f-a198-dcd9a109cdf4
 
 ## Installation
 
-### Manual Installation
-
-1. Copy the `wled_liveviewproxy` folder into the `custom_components` directory of your Home Assistant configuration.
-2. Restart Home Assistant.
-3. Add the integration via the web interface:
-   - Navigate to **Settings → Integrations**.
-   - Click **Add Integration** and select **WLED Live View Proxy**.
-   - Enter the IP address of your WLED device.
-
 ### Installation via HACS
 
 **Make sure HACS is installed:**\
@@ -106,6 +105,15 @@ To install **WLED Live View Proxy**, follow the link below:
 
 The integration is now installed and ready to use via HACS!
 
+### Manual installation (not recommended)
+
+1. Copy the `wled_liveviewproxy` folder into the `custom_components` directory of your Home Assistant configuration.
+2. Restart Home Assistant.
+3. Add the integration via the web interface:
+   - Navigate to **Settings → Integrations**.
+   - Click **Add Integration** and select **WLED Live View Proxy**.
+   - Enter the IP address of your WLED device.  
+
 ### Card Registration
 
 After installing the integration, you must additionally register the card in the dashboard resources:
@@ -128,8 +136,10 @@ Or open **Settings → Integrations** in Home Assistant, find `WLED Live View Pr
 
 Once minimally configured, a sensor will be created. Next, add the card to your dashboard—it'll appear as "WLED Live View Card". The card features a simple and clear configuration interface, immediately displaying the Live View of the first sensor listed. You can easily select your desired sensor in the provided field. Additionally, you can adjust the gradient brightness. If you encounter issues, enable Info Mode or Debug Mode to view extra information in the browser console. 
 
-> [!IMPORTANT]\
-> The card uses `LitElement`, imported from an external CDN by default. If the card fails to load, it may be due to **CDN unavailability** (e.g., network restrictions or offline access). In this case, you can modify the import path in the `wled-ws-card.js` file to use a local or bundled version of LitElement.
+> [!IMPORTANT]  
+> The card uses `LitElement`, imported from an external CDN by default. If the card fails to load, it may be due to **CDN unavailability** (e.g., network restrictions or offline access). In this case, you can modify the import path in the `wled-ws-card.js` file to use a local or bundled version of LitElement.  
+>
+> **Note:** Starting from version 0.2.2, this is no longer an issue as the card now works fully offline and no longer depends on the CDN or external imports.
 
 ![image](https://github.com/user-attachments/assets/4b82ed54-2a7c-44ca-97e7-cbef8c2dd7f8)
 
