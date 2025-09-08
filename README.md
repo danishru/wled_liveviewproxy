@@ -19,15 +19,28 @@ https://github.com/user-attachments/assets/ae4ff0ef-f80a-408f-a198-dcd9a109cdf4
 > [!IMPORTANT]\
 > This integration was created with the help of ChatGPT for collaborative code writing, debugging, and editing. If you hold different views on using AI tools, please consider this. I believe this use is acceptable because the integration is non-commercial, open-source, free, and its goal is to enhance interaction and usability within Home Assistant.
 
-## 🆕 What’s New in v0.2.2
+## 🆕 What’s New
 
-### Updates 🔄
+### v0.2.3 🚀  Tap. Hold. Double-Tap!  
+- **Inline actions on the card** — tap / hold / double-tap with `more-info`, `toggle`, `navigate`, `url`, `call-service`, `perform-action`.
+- **New schema-based editor (`ha-form`)** — expandable **Interactions** and **Advanced options**.
+- **Lit shim** replaces the legacy Polymer bundle.
+
+[![Read full release notes for v0.2.3](https://img.shields.io/badge/Read--release--notes-v0.2.3-blue?style=for-the-badge)](https://github.com/danishru/wled_liveviewproxy/releases/tag/v0.2.3)
+
+## Previous updates
+<details>
+<summary>Show</summary>
+
+### v0.2.2
+
+#### Updates 🔄
 - `wled-ws-card.js` now works fully offline and no longer depends on the CDN or external imports.
 
 [![Read full release notes for v0.2.2](https://img.shields.io/badge/Read--release--notes-v0.2.2-blue?style=for-the-badge)](https://github.com/danishru/wled_liveviewproxy/releases/tag/v0.2.2)
 
 
-### 🆕 What’s New in v0.2.1
+### v0.2.1
 
 #### ✨ New Features
 - **🧠 [JSON API Command Service](https://github.com/danishru/wled_liveviewproxy#json-api-command-service)**  
@@ -41,6 +54,7 @@ https://github.com/user-attachments/assets/ae4ff0ef-f80a-408f-a198-dcd9a109cdf4
 
 [![Read full release notes for v0.2.1](https://img.shields.io/badge/Read--release--notes-v0.2.1-blue?style=for-the-badge)](https://github.com/danishru/wled_liveviewproxy/releases/tag/v0.2.1)
 
+</details>
 
 ## Main features
 
