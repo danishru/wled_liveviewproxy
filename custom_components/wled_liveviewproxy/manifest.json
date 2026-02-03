@@ -5,11 +5,13 @@
     "@danishru"
   ],
   "config_flow": true,
-  "dependencies": ["http", "logger"],
+  "dependencies": [
+    "http"
+  ],
   "documentation": "https://github.com/danishru/wled_liveviewproxy?tab=readme-ov-file",
   "integration_type": "device",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/danishru/wled_liveviewproxy/issues",
   "requirements": [],
-  "version": "0.2.2"
+  "version": "v0.2.3"
 }

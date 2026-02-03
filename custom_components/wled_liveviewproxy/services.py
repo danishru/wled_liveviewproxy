@@ -96,4 +96,7 @@ def async_register_send_command_service(hass: HomeAssistant):
         handle_send_command,
         schema=SEND_COMMAND_SCHEMA,
         supports_response=SupportsResponse.ONLY,
+        description_placeholders={
+            "docs_url": "https://kno.wled.ge/interfaces/json-api/"
+        },
     )

@@ -42,7 +42,7 @@
           },
           "command": {
             "name": "Command",
-            "description": "Enter a JSON object representing the command to send to the WLED device.\n\nAPI Documentation - https://kno.wled.ge/interfaces/json-api/"
+            "description": "Enter a JSON object representing the command to send to the WLED device.\n\nAPI Documentation - {docs_url}"
           }
         }
       }

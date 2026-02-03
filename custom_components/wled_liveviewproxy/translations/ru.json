@@ -42,7 +42,7 @@
       },
       "command": {
         "name": "Команда",
-        "description": "Введите JSON объект, представляющий команду для отправки на устройство WLED.\n\nДокументация по API - https://kno.wled.ge/interfaces/json-api/"
+        "description": "Введите JSON объект, представляющий команду для отправки на устройство WLED.\n\nДокументация по API — {docs_url}"
       }
     }
   }
