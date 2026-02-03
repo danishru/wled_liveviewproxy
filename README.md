@@ -21,6 +21,11 @@ https://github.com/user-attachments/assets/ae4ff0ef-f80a-408f-a198-dcd9a109cdf4
 
 ## 🆕 What’s New
 
+### v0.2.4 🚀  Fixes  
+- Config flow and service translations fixes.
+
+[![Read full release notes for v0.2.4](https://img.shields.io/badge/Read--release--notes-v0.2.4-blue?style=for-the-badge)](https://github.com/danishru/wled_liveviewproxy/releases/tag/v0.2.4)
+
 ### v0.2.3 🚀  Tap. Hold. Double-Tap!  
 - **Inline actions on the card** — tap / hold / double-tap with `more-info`, `toggle`, `navigate`, `url`, `call-service`, `perform-action`.
 - **New schema-based editor (`ha-form`)** — expandable **Interactions** and **Advanced options**.
