@@ -13,6 +13,8 @@ def process_binary(data: bytes) -> str:
     Преобразует бинарные данные от WLED в строку, содержащую только цвета для CSS‑градиента.
     Если первый байт не равен 76 (ASCII 'L'), возвращает пустую строку.
     """
+    if not data or len(data) == 0:
+        return ""
     if data[0] != 76:
         return ""
     offset = 4 if data[1] == 2 else 2
@@ -63,7 +65,7 @@ async def connect_wled_for_entry(wled_ip: str, entry_data: dict):
             )
             _LOGGER.debug("[%s] Connected to WLED.", entry_id)
             _LOGGER.debug("[%s] Sending live preview command.", entry_id)
-            await connections["wled_ws"].send_str("{'lv':true}")
+            await connections["wled_ws"].send_str('{"lv":true}')
             while True:
                 try:
                     # Ожидаем сообщение от WLED с таймаутом 5 секунд
@@ -124,8 +126,12 @@ class WledWSView(HomeAssistantView):
     async def get(self, request: web.Request, entry_id) -> web.WebSocketResponse:
         hass = request.app["hass"]
         domain_data = hass.data.setdefault(DOMAIN, {})
-        # Получаем конфигурацию интеграции для данного entry_id
-        config_data = domain_data.setdefault("configs", {}).get(entry_id, {})
+        # Получаем конфигурацию интеграции для данного entry_id (динамически объединяя data и options)
+        config_entry = hass.config_entries.async_get_entry(entry_id)
+        if config_entry:
+            config_data = {**config_entry.data, **config_entry.options}
+        else:
+            config_data = domain_data.setdefault("configs", {}).get(entry_id, {})
         # Получаем или создаём хранилище для данной записи
         entry_data = domain_data.setdefault(entry_id, {})
         entry_data.setdefault("connections", {"client_ws_list": [], "wled_ws": None, "wled_task": None})

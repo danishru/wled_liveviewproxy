@@ -1,5 +1,5 @@
 // --- shim: expose LitElement/html/css without imports ---
-(() => {
+await (async () => {
   if (window.LitElement && window.html && window.css) return;
   const probes = [
     "ha-panel-lovelace",
@@ -8,27 +8,50 @@
     "hui-grid-layout",
     "ha-card",
   ];
-  for (const tag of probes) {
-    const El = customElements.get(tag);
-    if (!El) continue;
-    const LitBase = Object.getPrototypeOf(El);
-    if (LitBase?.prototype?.render) {
-      window.LitElement = window.LitElement || LitBase;
-      window.html       = window.html       || LitBase.prototype.html;
-      window.css        = window.css        || LitBase.prototype.css;
-      break;
+  const tryFindLit = () => {
+    for (const tag of probes) {
+      const El = customElements.get(tag);
+      if (!El) continue;
+      const LitBase = Object.getPrototypeOf(El);
+      if (LitBase?.prototype?.render) {
+        window.LitElement = window.LitElement || LitBase;
+        window.html       = window.html       || LitBase.prototype.html;
+        window.css        = window.css        || LitBase.prototype.css;
+        return true;
+      }
+    }
+    return false;
+  };
+
+  if (tryFindLit()) return;
+
+  // Wait for the Lovelace panel or card element to be defined, with a 2s safety timeout
+  await Promise.race([
+    customElements.whenDefined("ha-panel-lovelace"),
+    customElements.whenDefined("ha-card"),
+    new Promise((resolve) => setTimeout(resolve, 2000)),
+  ]);
+
+  if (tryFindLit()) return;
+
+  // CDN fallback
+  try {
+    const litMod = await import("https://unpkg.com/lit@3.0.0/index.js?module");
+    window.LitElement = window.LitElement || litMod.LitElement;
+    window.html       = window.html       || litMod.html;
+    window.css        = window.css        || litMod.css;
+  } catch (err) {
+    try {
+      const litMod = await import("https://unpkg.com/lit-element@2.4.0/lit-element.js?module");
+      window.LitElement = window.LitElement || litMod.LitElement;
+      window.html       = window.html       || litMod.html;
+      window.css        = window.css        || litMod.css;
+    } catch (err2) {
+      console.warn("wled-ws-card: Could not load LitElement from CDN, offline?", err2);
     }
   }
-  // на очень ранней загрузке могло не найтись — попробуем позднее
-  if (!window.LitElement) {
-    customElements.whenDefined("ha-panel-lovelace").then(() => {
-      const LitBase = Object.getPrototypeOf(customElements.get("ha-panel-lovelace"));
-      window.LitElement = window.LitElement || LitBase;
-      window.html       = window.html       || LitBase.prototype.html;
-      window.css        = window.css        || LitBase.prototype.css;
-    });
-  }
 })();
+
 
 /* =====================================================================
   Inline action helpers (shared) — tap / hold / double_tap
@@ -477,12 +500,14 @@ class WledWsCard extends HTMLElement {
           ha-card {
             width: 100%;
             height: 100%;
+            min-height: 50px;
             border-radius: var(--ha-card-border-radius, 8px);
             overflow: hidden;
           }
           .card-content {
             width: 100%;
             height: 100%;
+            min-height: inherit;
             box-sizing: border-box;
             filter: brightness(var(--card-brightness, 100%));
           }
@@ -534,203 +559,214 @@ window.customCards.push({
 // WledWsCardEditor — schema-based редактор (ha-form) + Expandable Interactions
 // ======================================================================
 
-class WledWsCardEditor extends LitElement {
-  static get properties() {
-    return {
-      _config:  { type: Object },
-      hass:     { type: Object },
-      _helpers: { type: Object },
-    };
-  }
-
-  constructor() {
-    super();
-    this._config = {
-      sensor: "",
-      brightness: 100,
-      angle: 90,
-      info: false,
-      debug: false,
-      tap_action: { action: "more-info" },
-    };
-  }
-
-  setConfig(config) {
-    this._config = {
-      sensor: "",
-      brightness: 100,
-      angle: 90,
-      info: false,
-      debug: false,
-      tap_action: { action: "more-info" },
-      ...config,
-    };
-  }
-
-  _getWledSensors() {
-    if (!this.hass) return [];
-    return Object.keys(this.hass.states)
-      .filter(
-        (entityId) =>
-          entityId.startsWith("sensor.wlvp_") &&
-          this.hass.states[entityId]?.attributes?.entry_id !== undefined
-      )
-      .sort();
-  }
-
-  _computeLabelCallback = (schema) => {
-    if (!this.hass) return;
-
-    switch (schema.name) {
-      case "sensor":
-      return this.hass.localize(`ui.panel.lovelace.editor.card.generic.entity`);
-      case "brightness":
-        return "Card Brightness (%)";
-      case "angle":
-        return "Gradient Angle (degrees)";
-      case "info":
-        return "Info Mode";
-      case "debug":
-        return "Debug Mode";
-      // Поле "name"
-      case "name":
-        return this.hass.localize(
-          "ui.panel.lovelace.editor.card.generic.name"
-        );
-      case "icon_tap_action":
-      case "icon_hold_action":
-      case "icon_double_tap_action":
-        return this.hass.localize(`ui.panel.lovelace.editor.card.tile.${schema.name}`);
-        
-      case "tap_action":
-      case "hold_action":
-      case "double_tap_action":
-        return this.hass.localize(`ui.panel.lovelace.editor.card.generic.${schema.name}`);          
-
-      // Фоллбек — generic для любого другого поля
-      default:
-        return this.hass.localize(
-          `ui.panel.lovelace.editor.card.generic.${schema.name}`
-        ) || schema.label || schema.name;
+if (window.LitElement) {
+  class WledWsCardEditor extends window.LitElement {
+    static get properties() {
+      return {
+        _config:  { type: Object },
+        hass:     { type: Object },
+        _helpers: { type: Object },
+      };
     }
-  };
 
-  _valueChanged = (ev) => {
-    let next = { ...this._config, ...ev.detail.value };
-  
-    if ("brightness" in ev.detail.value) {
-      const b = Number(next.brightness);
-      next.brightness = Number.isFinite(b) ? Math.min(1000, Math.max(0, b)) : 100;
+    constructor() {
+      super();
+      this._config = {
+        sensor: "",
+        brightness: 100,
+        angle: 90,
+        info: false,
+        debug: false,
+        tap_action: { action: "more-info" },
+      };
     }
-    if ("angle" in ev.detail.value) {
-      const a = Number(next.angle);
-      next.angle = Number.isFinite(a) ? ((a % 360) + 360) % 360 : 90;
+
+    setConfig(config) {
+      this._config = {
+        sensor: "",
+        brightness: 100,
+        angle: 90,
+        info: false,
+        debug: false,
+        tap_action: { action: "more-info" },
+        ...config,
+      };
     }
-  
-    // ключевая очистка: не храним пустые опциональные действия
-    if (next.hold_action?.action === "none") delete next.hold_action;
-    if (next.double_tap_action?.action === "none") delete next.double_tap_action;
-  
-    this._config = next;
-    this.dispatchEvent(new CustomEvent("config-changed", {
-      detail: { config: next }, bubbles: true, composed: true
-    }));
-  };  
 
-  async firstUpdated() {
-    try {
-      this._helpers = await window.loadCardHelpers();
-    } catch (_) {}
-  }
+    _getWledSensors() {
+      if (!this.hass) return [];
+      return Object.keys(this.hass.states)
+        .filter(
+          (entityId) =>
+            entityId.startsWith("sensor.wlvp_") &&
+            this.hass.states[entityId]?.attributes?.entry_id !== undefined
+        )
+        .sort();
+    }
 
-  static get styles() {
-    return css`.wrap{padding:16px}`;
-  }
+    _computeLabelCallback = (schema) => {
+      if (!this.hass) return;
 
-  render() {
-    if (!this.hass) return html``;
+      switch (schema.name) {
+        case "sensor":
+        return this.hass.localize(`ui.panel.lovelace.editor.card.generic.entity`);
+        case "brightness":
+          return "Card Brightness (%)";
+        case "angle":
+          return "Gradient Angle (degrees)";
+        case "info":
+          return "Info Mode";
+        case "debug":
+          return "Debug Mode";
+        // Поле "name"
+        case "name":
+          return this.hass.localize(
+            "ui.panel.lovelace.editor.card.generic.name"
+          );
+        case "icon_tap_action":
+        case "icon_hold_action":
+        case "icon_double_tap_action":
+          return this.hass.localize(`ui.panel.lovelace.editor.card.tile.${schema.name}`);
+          
+        case "tap_action":
+        case "hold_action":
+        case "double_tap_action":
+          return this.hass.localize(`ui.panel.lovelace.editor.card.generic.${schema.name}`);          
 
-    const sensors = this._getWledSensors();
-
-    const baseSchema = [
-      {
-        name: "sensor",
-        required: true,
-        selector: { entity: { include_entities: sensors } },
-      },
-      {
-        type: "grid",
-        columns: 2,            // ← без name
-        schema: [
-          {
-            name: "brightness",
-            selector: { number: { min: 0, max: 1000, step: 1, mode: "box" } },
-            default: this._config.brightness ?? 100,
-          },
-          {
-            name: "angle",
-            selector: { number: { min: 0, max: 360, step: 1, mode: "box" } },
-            default: this._config.angle ?? 90,
-          },
-        ],
-      },
-    ];    
-    
-    const schema = [
-      ...baseSchema,
-      {
-        name: "interactions",
-        type: "expandable",
-        iconPath: iconPath?.("mdiGestureTap"),
-        flatten: true,
-        schema: [
-          { name: "tap_action",
-            selector: { ui_action: { default_action: "more-info" } },
-            default: this._config.tap_action ?? { action: "more-info" } },
-    
-          { // вот этот блок показывает кнопку «Добавить действие»
-            name: "",
-            type: "optional_actions",
-            flatten: true,
-            schema: [
-              { name: "hold_action",       selector: { ui_action: { default_action: "none" } } },
-              { name: "double_tap_action", selector: { ui_action: { default_action: "none" } } },
-            ],
-          },
-        ],
-      },
-      /* -------- НОВЫЙ раскрывающийся раздел “Доп.-настройки” -------- */
-      {
-        name: "advanced_options",
-        label: "Advanced options",
-        type: "expandable",
-        iconPath: iconPath?.("mdiTuneVariant"),
-        flatten: true,
-        schema: [
-          {
-            type: "grid",
-            columns: 2,     // ← без name
-            schema: [
-              { name: "info",  selector: { boolean: {} }, default: !!this._config.info  },
-              { name: "debug", selector: { boolean: {} }, default: !!this._config.debug },
-            ],
-          },
-        ],
+        // Фоллбек — generic для любого другого поля
+        default:
+          return this.hass.localize(
+            `ui.panel.lovelace.editor.card.generic.${schema.name}`
+          ) || schema.label || schema.name;
       }
-    ];
+    };
 
-    return html`
-      <div class="wrap">
-        <ha-form
-          .hass=${this.hass}
-          .data=${this._config}
-          .schema=${schema}
-          .computeLabel=${this._computeLabelCallback}
-          @value-changed=${this._valueChanged}
-        ></ha-form>
-      </div>
-    `;
+    _valueChanged = (ev) => {
+      let next = { ...this._config, ...ev.detail.value };
+    
+      if ("brightness" in ev.detail.value) {
+        const b = Number(next.brightness);
+        next.brightness = Number.isFinite(b) ? Math.min(1000, Math.max(0, b)) : 100;
+      }
+      if ("angle" in ev.detail.value) {
+        const a = Number(next.angle);
+        next.angle = Number.isFinite(a) ? ((a % 360) + 360) % 360 : 90;
+      }
+    
+      // ключевая очистка: не храним пустые опциональные действия
+      if (next.hold_action?.action === "none") delete next.hold_action;
+      if (next.double_tap_action?.action === "none") delete next.double_tap_action;
+    
+      this._config = next;
+      this.dispatchEvent(new CustomEvent("config-changed", {
+        detail: { config: next }, bubbles: true, composed: true
+      }));
+    };  
+
+    async firstUpdated() {
+      try {
+        this._helpers = await window.loadCardHelpers();
+      } catch (_) {}
+    }
+
+    static get styles() {
+      return css`.wrap{padding:16px}`;
+    }
+
+    render() {
+      if (!this.hass) return html``;
+
+      const sensors = this._getWledSensors();
+
+      const baseSchema = [
+        {
+          name: "sensor",
+          required: true,
+          selector: { entity: { include_entities: sensors } },
+        },
+        {
+          type: "grid",
+          columns: 2,            // ← без name
+          schema: [
+            {
+              name: "brightness",
+              selector: { number: { min: 0, max: 1000, step: 1, mode: "box" } },
+              default: this._config.brightness ?? 100,
+            },
+            {
+              name: "angle",
+              selector: { number: { min: 0, max: 360, step: 1, mode: "box" } },
+              default: this._config.angle ?? 90,
+            },
+          ],
+        },
+      ];    
+      
+      const schema = [
+        ...baseSchema,
+        {
+          name: "interactions",
+          type: "expandable",
+          iconPath: iconPath?.("mdiGestureTap"),
+          flatten: true,
+          schema: [
+            { name: "tap_action",
+              selector: { ui_action: { default_action: "more-info" } },
+              default: this._config.tap_action ?? { action: "more-info" } },
+      
+            { // вот этот блок показывает кнопку «Добавить действие»
+              name: "",
+              type: "optional_actions",
+              flatten: true,
+              schema: [
+                { name: "hold_action",       selector: { ui_action: { default_action: "none" } } },
+                { name: "double_tap_action", selector: { ui_action: { default_action: "none" } } },
+              ],
+            },
+          ],
+        },
+        /* -------- НОВЫЙ раскрывающийся раздел “Доп.-настройки” -------- */
+        {
+          name: "advanced_options",
+          label: "Advanced options",
+          type: "expandable",
+          iconPath: iconPath?.("mdiTuneVariant"),
+          flatten: true,
+          schema: [
+            {
+              type: "grid",
+              columns: 2,     // ← без name
+              schema: [
+                { name: "info",  selector: { boolean: {} }, default: !!this._config.info  },
+                { name: "debug", selector: { boolean: {} }, default: !!this._config.debug },
+              ],
+            },
+          ],
+        }
+      ];
+
+      return html`
+        <div class="wrap">
+          <ha-form
+            .hass=${this.hass}
+            .data=${this._config}
+            .schema=${schema}
+            .computeLabel=${this._computeLabelCallback}
+            @value-changed=${this._valueChanged}
+          ></ha-form>
+        </div>
+      `;
+    }
   }
+  customElements.define("wled-ws-card-editor", WledWsCardEditor);
+} else {
+  class WledWsCardEditor extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' });
+      this.shadowRoot.innerHTML = `<div style="padding: 16px; color: var(--error-color, red); font-weight: bold;">WLED WS Card Editor: LitElement not loaded. Visual editor is unavailable offline.</div>`;
+    }
+    setConfig(config) {}
+  }
+  customElements.define("wled-ws-card-editor", WledWsCardEditor);
 }
-
-customElements.define("wled-ws-card-editor", WledWsCardEditor);
